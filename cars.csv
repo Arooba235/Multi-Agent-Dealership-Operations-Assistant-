@@ -1,0 +1,11 @@
+﻿id,make,model,year,mileage,price,type,fuel_type,colors,days_in_inventory,popularity_score,condition
+1,Toyota,Corolla,2020,24000,18000,Sedan,Petrol,White,60,8,Used
+2,Honda,Civic,2019,30000,17500,Sedan,Petrol,Blue,120,5,Used
+3,Tesla,Model 3,2022,5000,38000,EV,Electric,Black,20,9,Used
+4,Ford,F-150,2018,60000,25000,Truck,Petrol,Red,180,4,Used
+5,Hyundai,Elantra,2021,15000,17000,Sedan,Petrol,Gray,45,7,Used
+6,Kia,Sportage,2020,40000,22000,SUV,Petrol,Silver,90,6,Used
+7,Toyota,RAV4,2021,12000,30000,SUV,Hybrid,White,30,9,Used
+8,Nissan,Altima,2018,50000,14000,Sedan,Petrol,Black,200,3,Used
+9,BMW,3 Series,2019,28000,32000,Sedan,Petrol,Blue,75,8,Used
+10,Chevrolet,Equinox,2020,35000,21000,SUV,Petrol,Red,110,5,Used

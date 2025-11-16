@@ -1,0 +1,7 @@
+{
+  "customer_name": "Ali",
+  "budget": 20000,
+  "preferred_type": "Sedan",
+  "max_mileage": 15000,
+  "fuel_preference": "Petrol"
+}
