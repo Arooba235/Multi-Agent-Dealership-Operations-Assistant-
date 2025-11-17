@@ -5,61 +5,249 @@
     <title>AutoResearcher</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #fafafa;
-            margin: 40px;
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", Arial, sans-serif;
+            background: #f2f4f7;
+            display: flex;
+            height: 100vh;
+            color: #1a1a1a;
         }
-        .container {
-            max-width: 600px;
-            margin: auto;
+
+        /* -------- LEFT SIDEBAR -------- */
+        .sidebar {
+            width: 30%;
+            background: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            padding: 24px;
+            overflow-y: auto;
+            box-shadow: 2px 0 6px rgba(0,0,0,0.04);
         }
-        textarea {
+        .sidebar h2 {
+            margin: 0 0 16px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .field-group {
+            margin-bottom: 16px;
+        }
+        .field-label {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .field-input, .field-textarea {
             width: 100%;
-            height: 100px;
             padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background: #fafafa;
+            transition: 0.2s;
+        }
+        .field-input:focus, .field-textarea:focus {
+            border-color: #0078ff;
+            background: #fff;
+            box-shadow: 0 0 0 2px rgba(0,120,255,0.15);
+        }
+        .field-textarea {
+            height: 60px;
+            resize: vertical;
         }
         button {
-            padding: 10px 20px;
-            margin-top: 10px;
-            cursor: pointer;
-        }
-        .response-box {
-            background-color: #fff;
-            border: 1px solid #ccc;
-            padding: 15px;
-            margin-top: 20px;
+            padding: 12px 20px;
+            background: #0078ff;
+            color: white;
+            border: none;
             border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #0060cc;
+        }
+
+        /* -------- CHAT AREA -------- */
+        .chat-container {
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-box {
+            flex-grow: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .bubble {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 16px;
+            margin-bottom: 14px;
+            line-height: 1.5;
+            font-size: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            opacity: 0;
+            animation: fadeIn 0.25s forwards;
+        }
+        .user-bubble {
+            background: #0b84ff;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 6px;
+        }
+        .bot-bubble {
+            background: #ffffff;
+            color: #1a1a1a;
+            margin-right: auto;
+            border-bottom-left-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        .input-area {
+            display: flex;
+            padding: 16px;
+            border-top: 1px solid #e5e7eb;
+            background: #fff;
+            gap: 12px;
+        }
+        #queryInput {
+            flex-grow: 1;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            resize: none;
+            font-size: 15px;
+            outline: none;
+            transition: 0.2s;
+            max-height: 160px;
+        }
+        #queryInput:focus {
+            border-color: #0078ff;
+            box-shadow: 0 0 0 2px rgba(0,120,255,0.15);
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <h2>AutoResearcher</h2>
-        <form id="query-form">
-            <textarea name="query" placeholder="Ask a research question..."></textarea>
-            <br>
-            <button type="submit">Submit</button>
-        </form>
-        <div class="response-box" id="response"></div>
+
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar">
+        <h2>Customer Profile</h2>
+        <form id="customerForm"></form>
+        <button onclick="saveCustomer()">Save</button>
+    </div>
+
+    <!-- CHAT AREA -->
+    <div class="chat-container">
+        <div class="chat-box" id="chatBox"></div>
+        <div class="input-area">
+            <textarea id="queryInput" placeholder="Ask AutoResearcher..." rows="1"></textarea>
+            <button onclick="sendMessage()">Send</button>
+        </div>
     </div>
 
     <script>
-        const form = document.getElementById('query-form');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        const chatBox = document.getElementById("chatBox");
+        const queryInput = document.getElementById("queryInput");
+        const customerForm = document.getElementById("customerForm");
 
-            const formData = new FormData(form);
-            const responseBox = document.getElementById('response');
-            responseBox.innerHTML = "Thinking...";
 
-            const res = await fetch('/analyze', {
-                method: 'POST',
-                body: formData
+        queryInput.addEventListener("input", () => {
+            queryInput.style.height = "auto";
+            queryInput.style.height = Math.min(queryInput.scrollHeight, 160) + "px";
+        });
+
+        async function loadCustomer() {
+            const res = await fetch("/get-customer");
+            const data = await res.json();
+            renderCustomerFields(data);
+        }
+
+        function renderCustomerFields(data) {
+            customerForm.innerHTML = "";
+            for (let key in data) {
+                const div = document.createElement("div");
+                div.className = "field-group";
+
+                const label = document.createElement("label");
+                label.className = "field-label";
+                label.textContent = key;
+
+                let input;
+                if (typeof data[key] === "string" && data[key].length > 50) {
+                    input = document.createElement("textarea");
+                    input.className = "field-textarea";
+                } 
+                else {
+                    input = document.createElement("input");
+                    input.type = "text";
+                    input.className = "field-input";
+                }
+                input.value = data[key];
+                input.name = key;
+
+                div.appendChild(label);
+                div.appendChild(input);
+                customerForm.appendChild(div);
+            }
+        }
+
+        async function saveCustomer() {
+            const formData = new FormData(customerForm);
+            const data = {};
+            formData.forEach((value, key) => {
+                if (key === "budget" || key === "max_mileage") {
+                    data[key] = parseInt(value) || 0; 
+                } else {
+                    data[key] = value;
+                }
             });
 
-            const data = await res.json();
-            responseBox.innerHTML = data.response;
-        });
+            await fetch("/save-customer", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(data, null, 2)
+            });
+
+            alert("Customer profile updated!");
+        }
+
+        // Send message
+        async function sendMessage() {
+            let text = queryInput.value.trim();
+            if (!text) return;
+
+            addBubble(text, "user");
+            queryInput.value = "";
+            queryInput.style.height = "40px";
+
+            addBubble("Thinking...", "bot");
+
+            const formData = new FormData();
+            formData.append("query", text);
+
+            let res = await fetch("/analyze", { method: "POST", body: formData });
+            let data = await res.json();
+
+            chatBox.lastChild.remove();
+            addBubble(data.response, "bot");
+        }
+
+        
+        function addBubble(text, type) {
+            const div = document.createElement("div");
+            div.className = `bubble ${type}-bubble`;
+            div.innerHTML = text.replace(/\n/g, "<br>");
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        loadCustomer();
     </script>
+
 </body>
 </html>
